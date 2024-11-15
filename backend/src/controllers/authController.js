@@ -60,26 +60,21 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    console.log('Login request received:', { email: req.body.email });
+    console.log('Login attempt with:', { email: req.body.email });
     
     const { email, password } = req.body;
-
-    // Validate input
-    if (!email || !password) {
-      return res.status(400).json({
-        message: 'Please provide email and password'
-      });
-    }
 
     // Find user
     const user = await User.findOne({ email });
     if (!user) {
+      console.log('User not found:', email);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      console.log('Invalid password for user:', email);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
@@ -89,6 +84,9 @@ export const login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
+
+    console.log('Login successful for user:', { email, userId: user._id });
+    console.log('Generated token:', token);
 
     res.json({
       token,
@@ -100,17 +98,13 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({
-      message: 'Error logging in',
-      error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    res.status(500).json({ message: 'Error logging in', error: error.message });
   }
 };
 
 export const getProfile = async (req, res) => {
   try {
-    // req.user is set by the authenticate middleware
+    console.log('Getting profile for user:', req.user._id);
     const user = await User.findById(req.user._id).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -118,9 +112,6 @@ export const getProfile = async (req, res) => {
     res.json(user);
   } catch (error) {
     console.error('Get profile error:', error);
-    res.status(500).json({
-      message: 'Error fetching profile',
-      error: error.message
-    });
+    res.status(500).json({ message: 'Error fetching profile', error: error.message });
   }
 };

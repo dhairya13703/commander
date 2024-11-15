@@ -1,130 +1,132 @@
 // frontend/src/pages/Dashboard.jsx
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { Search, Plus } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Plus, Search, Settings } from 'lucide-react';
+import { FolderList } from '../components/FolderManagement';
+import { useAuth } from '../contexts/AuthContext';
+import api from '../utils/api';
 
 const Dashboard = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
 
-  const { data: commands = [], isLoading, error } = useQuery({
-    queryKey: ['commands', searchQuery],
+  const { data: mainFolders = [], isLoading, error } = useQuery({
+    queryKey: ['mainFolders'],
     queryFn: async () => {
-      const url = searchQuery
-        ? `/api/commands/search?q=${encodeURIComponent(searchQuery)}`
-        : '/api/commands';
-      const { data } = await axios.get(url);
-      return data;
-    }
+      try {
+        console.log('Fetching folders with auth:', isAuthenticated);
+        const { data } = await api.get('/folders/main');
+        return data;
+      } catch (err) {
+        console.error('Error fetching folders:', err);
+        throw err;
+      }
+    },
+    enabled: isAuthenticated, // Only fetch when authenticated
+    retry: 1, // Limit retries
   });
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this command?')) {
-      try {
-        await axios.delete(`/api/commands/${id}`);
-        // Refresh the commands list
-        window.location.reload();
-      } catch (error) {
-        console.error('Error deleting command:', error);
-        alert('Failed to delete command');
-      }
+  const handleCreateFolder = async () => {
+    try {
+      await api.post('/folders/main', {
+        name: 'New Folder',
+        description: 'A new folder'
+      });
+      // Invalidate and refetch
+      queryClient.invalidateQueries(['mainFolders']);
+    } catch (error) {
+      console.error('Error creating folder:', error);
     }
   };
 
-  if (error) {
+  if (!isAuthenticated) {
     return (
-      <div className="text-red-500 text-center mt-4">
-        Error loading commands: {error.message}
+      <div className="min-h-screen flex items-center justify-center">
+        <div>Please log in to view your dashboard</div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">My Commands</h1>
-        <button
-          onClick={() => navigate('/commands/new')}
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          New Command
-        </button>
-      </div>
-
-      <div className="mb-6">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search commands..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-          />
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="text-center">Loading commands...</div>
-      ) : commands.length === 0 ? (
-        <div className="text-center text-gray-500 mt-8">
-          <p className="text-xl">No commands found</p>
-          <p className="mt-2">Start by adding your first command!</p>
-        </div>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {commands.map((command) => (
-            <div
-              key={command._id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200"
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Command Dashboard</h1>
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
             >
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {command.title}
-                  </h3>
-                  <span className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full">
-                    {command.platform}
-                  </span>
-                </div>
-                <p className="text-gray-600 text-sm mb-4">{command.description}</p>
-                <div className="bg-gray-50 rounded p-3 mb-4">
-                  <code className="text-sm text-gray-800 break-all">
-                    {command.command}
-                  </code>
-                </div>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {command.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-full"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <div className="flex justify-end space-x-2 mt-4">
-                  <button
-                    onClick={() => navigate(`/commands/${command._id}`)}
-                    className="px-3 py-1 text-sm text-indigo-600 hover:text-indigo-700"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(command._id)}
-                    className="px-3 py-1 text-sm text-red-600 hover:text-red-700"
-                  >
-                    Delete
-                  </button>
+              <Settings className="h-5 w-5 mr-2" />
+              Manage Folders
+            </button>
+            <button
+              onClick={() => navigate('/commands/new')}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              New Command
+            </button>
+          </div>
+        </div>
+
+        {error ? (
+          <div className="text-center py-12">
+            <div className="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm text-red-600">
+              Error loading folders. Please try again.
+            </div>
+          </div>
+        ) : isLoading ? (
+          <div className="text-center py-12">
+            <div className="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm text-indigo-600">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Loading folders...
+            </div>
+          </div>
+        ) : mainFolders.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-500">
+              <h3 className="text-lg font-medium">No folders found</h3>
+              <p className="mt-1">Click "Manage Folders" to create your first folder</p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {mainFolders.map((folder) => (
+              <div
+                key={folder._id}
+                onClick={() => navigate(`/folder/${folder._id}`)}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 cursor-pointer p-4"
+              >
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <span className="text-2xl">{folder.icon || '📁'}</span>
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-lg font-medium text-gray-900">{folder.name}</h3>
+                    <p className="text-sm text-gray-500">{folder.description}</p>
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+        )}
+
+        {showSettings && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+              <div className="mt-3">
+                <FolderList isMain={true} />
+              </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

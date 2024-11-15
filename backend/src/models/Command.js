@@ -1,3 +1,4 @@
+// backend/src/models/Command.js
 import mongoose from 'mongoose';
 
 const commandSchema = new mongoose.Schema({
@@ -13,6 +14,15 @@ const commandSchema = new mongoose.Schema({
   description: {
     type: String,
     required: true
+  },
+  mainFolder: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'MainFolder',
+    required: true
+  },
+  subFolder: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'SubFolder'
   },
   tags: [{
     type: String,
@@ -34,5 +44,4 @@ const commandSchema = new mongoose.Schema({
 
 commandSchema.index({ title: 'text', description: 'text', command: 'text', tags: 'text' });
 
-const Command = mongoose.model('Command', commandSchema);
-export { Command };
+export const Command = mongoose.model('Command', commandSchema);

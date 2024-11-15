@@ -7,16 +7,18 @@ import PrivateRoute from './components/PrivateRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import FolderView from './pages/FolderView';
+import Profile from './pages/Profile';
 import CommandEditor from './pages/CommandEditor';
 
-const queryClient = new QueryClient();
-
-// Temporary components until we create the actual ones
-// const Login = () => <div>Login Page</div>;
-// const Register = () => <div>Register Page</div>;
-// const Dashboard = () => <div>Dashboard Page</div>;
-// const CommandEditor = () => <div>Command Editor Page</div>;
-const Profile = () => <div>Profile Page</div>;
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
@@ -29,8 +31,9 @@ function App() {
             <Route element={<Layout />}>
               <Route element={<PrivateRoute />}>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/folder/:folderId" element={<FolderView />} />
                 <Route path="/commands/new" element={<CommandEditor />} />
-                <Route path="/commands/:id" element={<CommandEditor />} />
+                <Route path="/commands/:id/edit" element={<CommandEditor />} />
                 <Route path="/profile" element={<Profile />} />
               </Route>
             </Route>
