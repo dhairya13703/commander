@@ -1,8 +1,6 @@
-// frontend/src/pages/CommandEditor.jsx
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import Editor from '@monaco-editor/react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
 import api from '../utils/api';
 
@@ -10,9 +8,9 @@ const CommandEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const isEditing = Boolean(id);
 
-  // Initialize formData with location state if available
   const [formData, setFormData] = useState({
     title: '',
     command: '',
@@ -25,7 +23,7 @@ const CommandEditor = () => {
 
   const [error, setError] = useState('');
 
-  // Fetch all main folders
+  // Fetch main folders
   const { data: mainFolders = [] } = useQuery({
     queryKey: ['mainFolders'],
     queryFn: async () => {
@@ -34,7 +32,7 @@ const CommandEditor = () => {
     }
   });
 
-  // Fetch subfolders based on selected main folder
+  // Fetch subfolders if mainFolder is selected
   const { data: subFolders = [] } = useQuery({
     queryKey: ['subFolders', formData.mainFolder],
     queryFn: async () => {
@@ -46,7 +44,7 @@ const CommandEditor = () => {
   });
 
   // Fetch command details if editing
-  const { data: commandData } = useQuery({
+  const { data: commandData, isLoading: isLoadingCommand } = useQuery({
     queryKey: ['command', id],
     queryFn: async () => {
       const { data } = await api.get(`/commands/${id}`);
@@ -63,7 +61,7 @@ const CommandEditor = () => {
         command: commandData.command,
         description: commandData.description,
         platform: commandData.platform,
-        tags: commandData.tags.join(', '),
+        tags: commandData.tags?.join(', ') || '',
         mainFolder: commandData.mainFolder,
         subFolder: commandData.subFolder || ''
       });
@@ -79,7 +77,7 @@ const CommandEditor = () => {
       return api.post('/commands', data);
     },
     onSuccess: () => {
-      // Navigate back to the appropriate folder view
+      queryClient.invalidateQueries(['commands']);
       if (formData.subFolder) {
         navigate(`/folder/${formData.mainFolder}/subfolder/${formData.subFolder}`);
       } else {
@@ -111,6 +109,15 @@ const CommandEditor = () => {
       console.error('Error saving command:', err);
     }
   };
+
+  if (isEditing && isLoadingCommand) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center mb-6">
@@ -179,10 +186,10 @@ const CommandEditor = () => {
           </div>
         </div>
 
-        {/* Command Title */}
+        {/* Title */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Command Title *
+            Title *
           </label>
           <input
             type="text"
@@ -198,20 +205,13 @@ const CommandEditor = () => {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Command *
           </label>
-          <div className="mt-1 border rounded-md overflow-hidden">
-            <Editor
-              height="200px"
-              language="shell"
-              value={formData.command}
-              onChange={(value) => setFormData({ ...formData, command: value })}
-              options={{
-                minimap: { enabled: false },
-                lineNumbers: 'off',
-                scrollBeyondLastLine: false,
-                wordWrap: 'on'
-              }}
-            />
-          </div>
+          <textarea
+            value={formData.command}
+            onChange={(e) => setFormData({ ...formData, command: e.target.value })}
+            rows={3}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-mono"
+            required
+          />
         </div>
 
         {/* Description */}
