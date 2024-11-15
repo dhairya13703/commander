@@ -8,8 +8,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import FolderView from './pages/FolderView';
-import Profile from './pages/Profile';
 import CommandEditor from './pages/CommandEditor';
+import Profile from './pages/Profile';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,6 +32,7 @@ function App() {
               <Route element={<PrivateRoute />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/folder/:folderId" element={<FolderView />} />
+                <Route path="/folder/:folderId/subfolder/:subFolderId" element={<FolderView />} />
                 <Route path="/commands/new" element={<CommandEditor />} />
                 <Route path="/commands/:id/edit" element={<CommandEditor />} />
                 <Route path="/profile" element={<Profile />} />
