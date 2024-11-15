@@ -52,13 +52,19 @@ export const updateCommand = async (req, res) => {
 
 export const deleteCommand = async (req, res) => {
   try {
-    const command = await Command.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+    const command = await Command.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user._id
+    });
+
     if (!command) {
       return res.status(404).json({ message: 'Command not found' });
     }
+
     res.json({ message: 'Command deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting command', error: error.message });
+    console.error('Error deleting command:', error);
+    res.status(500).json({ message: 'Error deleting command' });
   }
 };
 
