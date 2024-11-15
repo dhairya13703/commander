@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, ChevronLeft, Folder, X, Trash, Command } from 'lucide-react';
+import { Plus, ChevronLeft, Folder, X, Trash, Command, Copy, Check } from 'lucide-react';
 import api from '../utils/api';
 
 // Confirmation Modal Component
@@ -123,12 +123,13 @@ const CreateSubFolderModal = ({ mainFolderId, onClose }) => {
   );
 };
 
-// Commands List Component
+// CommandsList Component
 const CommandsList = ({ mainFolderId, subFolderId }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [commandToDelete, setCommandToDelete] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   const { data: commands = [], isLoading } = useQuery({
     queryKey: ['commands', mainFolderId, subFolderId],
@@ -148,6 +149,8 @@ const CommandsList = ({ mainFolderId, subFolderId }) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['commands', mainFolderId, subFolderId]);
+      setDeleteModalOpen(false);
+      setCommandToDelete(null);
     },
     onError: (error) => {
       console.error('Error deleting command:', error);
@@ -164,11 +167,21 @@ const CommandsList = ({ mainFolderId, subFolderId }) => {
     if (commandToDelete) {
       try {
         await deleteMutation.mutateAsync(commandToDelete._id);
-        setDeleteModalOpen(false);
-        setCommandToDelete(null);
       } catch (error) {
         console.error('Error in delete confirmation:', error);
       }
+    }
+  };
+
+  const handleCopy = async (command) => {
+    try {
+      await navigator.clipboard.writeText(command.command);
+      setCopiedId(command._id);
+      setTimeout(() => {
+        setCopiedId(null);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
     }
   };
 
@@ -194,8 +207,19 @@ const CommandsList = ({ mainFolderId, subFolderId }) => {
                 </span>
               </div>
               <p className="text-gray-600 mb-4">{command.description}</p>
-              <div className="bg-gray-50 rounded p-3 mb-4">
+              <div className="bg-gray-50 rounded p-3 mb-4 relative group">
                 <code className="text-sm text-gray-800 break-all">{command.command}</code>
+                <button
+                  onClick={() => handleCopy(command)}
+                  className="absolute right-2 top-2 p-1.5 rounded-md bg-white shadow-sm border border-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  title="Copy command"
+                >
+                  {copiedId === command._id ? (
+                    <Check className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <Copy className="w-4 h-4 text-gray-500" />
+                  )}
+                </button>
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex flex-wrap gap-2">
@@ -242,6 +266,7 @@ const CommandsList = ({ mainFolderId, subFolderId }) => {
   );
 };
 
+// Main FolderView Component
 const FolderView = () => {
   const { folderId, subFolderId } = useParams();
   const navigate = useNavigate();
@@ -249,7 +274,6 @@ const FolderView = () => {
   const queryClient = useQueryClient();
   const location = useLocation();
 
-  // Fetch main folder details
   const { data: mainFolder, isLoading: isLoadingFolder } = useQuery({
     queryKey: ['mainFolder', folderId],
     queryFn: async () => {
@@ -311,8 +335,6 @@ const FolderView = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Your existing JSX structure remains exactly the same... */}
-      {/* Breadcrumb Navigation */}
       <div className="flex items-center mb-8">
         <button
           onClick={() => navigate('/')}
@@ -336,7 +358,6 @@ const FolderView = () => {
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex justify-end space-x-4 mb-6">
         {!subFolderId && (
           <button
@@ -356,15 +377,12 @@ const FolderView = () => {
         </button>
       </div>
 
-      {/* Content */}
       {subFolderId ? (
-        // Show commands for the current subfolder
         <div>
           <h2 className="text-xl font-semibold mb-4">{currentSubFolder?.name} Commands</h2>
           <CommandsList mainFolderId={folderId} subFolderId={subFolderId} />
         </div>
       ) : (
-        // Show subfolders grid
         <>
           <h2 className="text-xl font-semibold mb-4">Subfolders</h2>
           {isLoadingSubFolders ? (
@@ -384,8 +402,8 @@ const FolderView = () => {
                       <Folder className="w-5 h-5 text-indigo-500 mr-3" />
                       <div>
                         <h3 className="font-medium">{subfolder.name}</h3>
-                        <p className="text-sm text-gray-500">{subfolder.description} </p>
-                        </div>
+                        <p className="text-sm text-gray-500">{subfolder.description}</p>
+                      </div>
                     </div>
                     <button
                       onClick={(e) => {
@@ -402,13 +420,11 @@ const FolderView = () => {
             </div>
           )}
           
-          {/* Main folder commands */}
           <h2 className="text-xl font-semibold mb-4">Main Folder Commands</h2>
           <CommandsList mainFolderId={folderId} />
         </>
       )}
 
-      {/* Create Subfolder Modal */}
       {showCreateModal && (
         <CreateSubFolderModal
           mainFolderId={folderId}
@@ -418,4 +434,5 @@ const FolderView = () => {
     </div>
   );
 };
+
 export default FolderView;
