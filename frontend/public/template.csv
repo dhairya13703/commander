@@ -1,0 +1,4 @@
+title,command,description,platform,tags
+List Files,ls -la,List all files with details,linux,"files,system"
+Check Memory,free -h,Show memory usage,linux,"system,performance"
+Create Directory,mkdir mydir,Create a new directory,universal,"files,basic"
