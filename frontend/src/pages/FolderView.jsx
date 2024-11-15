@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, ChevronLeft, Folder, X, Trash, Command, Copy, Check } from 'lucide-react';
+import { Plus, ChevronLeft, Folder, X, Trash, Command, Copy, Check, Upload } from 'lucide-react';
 import api from '../utils/api';
+import ImportModal from '../components/ImportModal';
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
@@ -37,7 +38,7 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
   );
 };
 
-// Create Subfolder Modal Component
+// Create Subfolder Modal Component remains the same
 const CreateSubFolderModal = ({ mainFolderId, onClose }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -56,10 +57,6 @@ const CreateSubFolderModal = ({ mainFolderId, onClose }) => {
     onSuccess: () => {
       queryClient.invalidateQueries(['subFolders', mainFolderId]);
       onClose();
-    },
-    onError: (error) => {
-      console.error('Error creating subfolder:', error);
-      alert('Failed to create subfolder');
     }
   });
 
@@ -271,9 +268,10 @@ const FolderView = () => {
   const { folderId, subFolderId } = useParams();
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const queryClient = useQueryClient();
-  const location = useLocation();
 
+  // Queries
   const { data: mainFolder, isLoading: isLoadingFolder } = useQuery({
     queryKey: ['mainFolder', folderId],
     queryFn: async () => {
@@ -335,6 +333,7 @@ const FolderView = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Breadcrumb Navigation */}
       <div className="flex items-center mb-8">
         <button
           onClick={() => navigate('/')}
@@ -358,6 +357,7 @@ const FolderView = () => {
         </div>
       </div>
 
+      {/* Actions */}
       <div className="flex justify-end space-x-4 mb-6">
         {!subFolderId && (
           <button
@@ -369,6 +369,13 @@ const FolderView = () => {
           </button>
         )}
         <button
+          onClick={() => setShowImportModal(true)}
+          className="flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+        >
+          <Upload className="w-4 h-4 mr-2" />
+          Import Commands
+        </button>
+        <button
           onClick={handleNewCommand}
           className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
         >
@@ -377,6 +384,7 @@ const FolderView = () => {
         </button>
       </div>
 
+      {/* Content */}
       {subFolderId ? (
         <div>
           <h2 className="text-xl font-semibold mb-4">{currentSubFolder?.name} Commands</h2>
@@ -425,10 +433,24 @@ const FolderView = () => {
         </>
       )}
 
+      {/* Modals */}
       {showCreateModal && (
         <CreateSubFolderModal
           mainFolderId={folderId}
           onClose={() => setShowCreateModal(false)}
+        />
+      )}
+
+      {showImportModal && (
+        <ImportModal
+          isOpen={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          mainFolderId={folderId}
+          subFolderId={subFolderId}
+          onImportComplete={() => {
+            queryClient.invalidateQueries(['commands', folderId, subFolderId]);
+            setShowImportModal(false);
+          }}
         />
       )}
     </div>

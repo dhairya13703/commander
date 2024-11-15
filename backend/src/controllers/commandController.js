@@ -92,3 +92,22 @@ export const searchCommands = async (req, res) => {
     res.status(500).json({ message: 'Error searching commands', error: error.message });
   }
 };
+
+export const batchCreateCommands = async (req, res) => {
+  try {
+    const { commands } = req.body;
+    
+    // Add user ID to each command
+    const commandsWithUser = commands.map(command => ({
+      ...command,
+      user: req.user._id
+    }));
+
+    // Insert all commands
+    const result = await Command.insertMany(commandsWithUser);
+    
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({ message: 'Error importing commands', error: error.message });
+  }
+};
