@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 
 export const register = async (req, res) => {
   try {
-    console.log('Registration request received:', req.body);
+    // console.log('Registration request received:', req.body);
     
     const { username, email, password } = req.body;
 
@@ -60,21 +60,21 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    console.log('Login attempt with:', { email: req.body.email });
+    // console.log('Login attempt with:', { email: req.body.email });
     
     const { email, password } = req.body;
 
     // Find user
     const user = await User.findOne({ email });
     if (!user) {
-      console.log('User not found:', email);
+      // console.log('User not found:', email);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      console.log('Invalid password for user:', email);
+      // console.log('Invalid password for user:', email);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
@@ -85,8 +85,8 @@ export const login = async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    console.log('Login successful for user:', { email, userId: user._id });
-    console.log('Generated token:', token);
+    // console.log('Login successful for user:', { email, userId: user._id });
+    // console.log('Generated token:', token);
 
     res.json({
       token,
@@ -104,7 +104,7 @@ export const login = async (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
-    console.log('Getting profile for user:', req.user._id);
+    // console.log('Getting profile for user:', req.user._id);
     const user = await User.findById(req.user._id).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });

@@ -19,8 +19,8 @@ const Login = () => {
       setError('');
       setLoading(true);
       const result = await login(formData.email, formData.password);
-      console.log('Login successful:', result);
-      console.log('Token saved:', localStorage.getItem('token'));
+      // // console.log('Login successful:', result);
+      // // console.log('Token saved:', localStorage.getItem('token'));
       navigate('/');
     } catch (err) {
       console.error('Login error:', err);

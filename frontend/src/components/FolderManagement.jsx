@@ -14,12 +14,12 @@ const CreateFolderModal = ({ onClose }) => {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      console.log('Creating folder with data:', data);
+      // // console.log('Creating folder with data:', data);
       const response = await api.post('/folders/main', data);
       return response.data;
     },
     onSuccess: () => {
-      console.log('Folder created successfully');
+      // // console.log('Folder created successfully');
       queryClient.invalidateQueries(['mainFolders']);
       onClose();
     },

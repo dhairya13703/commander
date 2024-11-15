@@ -31,12 +31,12 @@ app.use(errorHandler);
 // Database connection with debugging
 const connectDB = async () => {
   try {
-    console.log('MongoDB URI:', process.env.MONGODB_URI); // Be careful with logging in production
+    // console.log('MongoDB URI:', process.env.MONGODB_URI); // Be careful with logging in production
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log('Connected to MongoDB successfully');
+    // console.log('Connected to MongoDB successfully');
   } catch (error) {
     console.error('MongoDB connection error:', error);
     process.exit(1);
@@ -47,7 +47,7 @@ const connectDB = async () => {
 connectDB().then(() => {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    // console.log(`Server is running on port ${PORT}`);
   });
 });
 

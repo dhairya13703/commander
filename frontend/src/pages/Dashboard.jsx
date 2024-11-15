@@ -16,7 +16,7 @@ const Dashboard = () => {
     queryKey: ['mainFolders'],
     queryFn: async () => {
       try {
-        console.log('Fetching folders with auth:', isAuthenticated);
+        // // console.log('Fetching folders with auth:', isAuthenticated);
         const { data } = await api.get('/folders/main');
         return data;
       } catch (err) {
