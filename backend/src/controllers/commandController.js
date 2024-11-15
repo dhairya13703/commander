@@ -83,10 +83,25 @@ export const deleteCommand = async (req, res) => {
 export const searchCommands = async (req, res) => {
   try {
     const { q } = req.query;
+    
+    if (!q) {
+      return res.json([]);
+    }
+
     const commands = await Command.find({
       user: req.user._id,
-      $text: { $search: q }
-    }).sort({ score: { $meta: 'textScore' } });
+      $or: [
+        { title: { $regex: q, $options: 'i' } },
+        { command: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } },
+        { tags: { $in: [new RegExp(q, 'i')] } }
+      ]
+    })
+    .populate('mainFolder', 'name')
+    .populate('subFolder', 'name')
+    .sort({ createdAt: -1 })
+    .limit(20);
+
     res.json(commands);
   } catch (error) {
     res.status(500).json({ message: 'Error searching commands', error: error.message });
@@ -111,3 +126,4 @@ export const batchCreateCommands = async (req, res) => {
     res.status(500).json({ message: 'Error importing commands', error: error.message });
   }
 };
+
