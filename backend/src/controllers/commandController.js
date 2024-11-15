@@ -2,7 +2,19 @@ import { Command } from '../models/Command.js';
 
 export const getAllCommands = async (req, res) => {
   try {
-    const commands = await Command.find({ user: req.user._id })
+    const query = { user: req.user._id };
+    
+    // Add mainFolder filter if provided
+    if (req.query.mainFolder) {
+      query.mainFolder = req.query.mainFolder;
+    }
+    
+    // Add subFolder filter if provided
+    if (req.query.subFolder) {
+      query.subFolder = req.query.subFolder;
+    }
+
+    const commands = await Command.find(query)
       .sort({ createdAt: -1 });
     res.json(commands);
   } catch (error) {

@@ -3,3 +3,7 @@ node_modules
 .DS_Store
 dist
 build
+backend/backend.sh
+backend/combined_js.txt
+frontend/combined_jsx.txt
+frontend/frontend.sh

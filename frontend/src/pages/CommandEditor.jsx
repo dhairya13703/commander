@@ -9,16 +9,18 @@ import api from '../utils/api';
 const CommandEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const isEditing = Boolean(id);
 
+  // Initialize formData with location state if available
   const [formData, setFormData] = useState({
     title: '',
     command: '',
     description: '',
     platform: 'universal',
     tags: '',
-    mainFolder: '',
-    subFolder: ''
+    mainFolder: location.state?.mainFolder || '',
+    subFolder: location.state?.subFolder || ''
   });
 
   const [error, setError] = useState('');
@@ -77,6 +79,7 @@ const CommandEditor = () => {
       return api.post('/commands', data);
     },
     onSuccess: () => {
+      // Navigate back to the appropriate folder view
       if (formData.subFolder) {
         navigate(`/folder/${formData.mainFolder}/subfolder/${formData.subFolder}`);
       } else {
@@ -108,7 +111,6 @@ const CommandEditor = () => {
       console.error('Error saving command:', err);
     }
   };
-
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center mb-6">
