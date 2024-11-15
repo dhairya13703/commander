@@ -1,8 +1,11 @@
 // frontend/src/utils/api.js
 import axios from 'axios';
+// import dotenv from 'dotenv';
+
+// dotenv.config();
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: localStorage.getItem('VITE_API_URL') || 'http://localhost:5000/api',
 });
 
 // Debug function to check token
