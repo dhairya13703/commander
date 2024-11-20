@@ -1,11 +1,8 @@
 // frontend/src/utils/api.js
 import axios from 'axios';
-// import dotenv from 'dotenv';
-
-// dotenv.config();
 
 const api = axios.create({
-  baseURL: localStorage.getItem('VITE_API_URL') || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
 });
 
 // Debug function to check token
@@ -40,7 +37,6 @@ api.interceptors.response.use(
       status: error.response?.status,
       data: error.response?.data
     });
-
     if (error.response?.status === 401) {
       const token = checkToken();
       if (token) {
@@ -48,7 +44,6 @@ api.interceptors.response.use(
         window.location.href = '/login';
       }
     }
-
     return Promise.reject(error);
   }
 );
